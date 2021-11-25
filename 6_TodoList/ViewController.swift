@@ -41,7 +41,7 @@ class ViewController: UIViewController {
 
     @objc func tapAddBtn(sender:UIBarButtonItem){
         let alert = UIAlertController(title: "할 일 추가", message: nil , preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "등록", style: .default){ [weak self] _ in
+        alert.addAction(UIAlertAction(title: "등록", style: .default){ [weak self] _ in // 클로저 캡쳐
             guard let title = alert.textFields?[0].text else {return}
             let task = Task(title: title, done: false)
             self?.tasks.append(task)
