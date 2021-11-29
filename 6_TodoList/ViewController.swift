@@ -10,13 +10,18 @@ import UIKit
 class ViewController: UIViewController {
 
     var tableView : UITableView!
-    var tasks = [Task]()
+    var tasks = [Task](){
+        didSet{
+            dataSave()
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         
         self.view.backgroundColor = .white
+        loadTasks()
         
         self.navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: #selector(tapEditBtn(sender:)))
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(tapAddBtn(sender:)))
@@ -54,6 +59,29 @@ class ViewController: UIViewController {
         self.present(alert, animated: true)
     }
     
+    func dataSave(){
+        let data = self.tasks.map{ // map 고차함수 : 데이터 변형 후 배열로 리턴
+            [
+                "title" : $0.title,
+                "done" : $0.done
+            ]
+        }
+        let ud = UserDefaults.standard
+        ud.setValue(data, forKey: "tasks")
+        print(data)
+    }
+    
+    func loadTasks(){
+        let ud = UserDefaults.standard
+        guard let data = ud.value(forKey: "tasks") as? [[String:Any]] else {return}
+        self.tasks = data.compactMap{ // compactMap : 데이터 변형 + nil 제거 + 옵셔널바인딩 + 1차원 배열로 변경
+            guard let title = $0["title"] as? String else {return nil}
+            guard let done = $0["done"] as? Bool else {return nil}
+            
+            return Task(title: title, done: done)
+        }
+    }
+    
 }
 
 extension ViewController: UITableViewDataSource{
@@ -64,7 +92,6 @@ extension ViewController: UITableViewDataSource{
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = self.tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as UITableViewCell
         cell.textLabel?.text = self.tasks[indexPath.row].title
-        print(self.tasks[indexPath.row].title)
         return cell
     }
 }
