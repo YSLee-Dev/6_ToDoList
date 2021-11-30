@@ -15,6 +15,8 @@ class ViewController: UIViewController {
             dataSave()
         }
     }
+    var doneBtn : UIBarButtonItem!
+    var editBtn : UIBarButtonItem!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,13 +25,18 @@ class ViewController: UIViewController {
         self.view.backgroundColor = .white
         loadTasks()
         
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: #selector(tapEditBtn(sender:)))
+        self.doneBtn = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(tapDoneBtn))
+        self.editBtn = UIBarButtonItem(barButtonSystemItem: .edit, target: self, action: #selector(tapEditBtn(sender:)))
+        
+        self.navigationItem.leftBarButtonItem = self.editBtn
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(tapAddBtn(sender:)))
+        
         
         self.tableView = UITableView()
         self.tableView.translatesAutoresizingMaskIntoConstraints = false
         self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
         self.tableView.dataSource = self
+        self.tableView.delegate = self
         self.view.addSubview(self.tableView)
         
         NSLayoutConstraint.activate([
@@ -41,7 +48,14 @@ class ViewController: UIViewController {
     }
     
     @objc func tapEditBtn(sender:UIBarButtonItem){
-        
+        guard !self.tasks.isEmpty else {return}
+        self.navigationItem.leftBarButtonItem = self.doneBtn
+        self.tableView.setEditing(true, animated: true)
+    }
+    
+    @objc func tapDoneBtn(){
+        self.navigationItem.leftBarButtonItem = self.editBtn
+        self.tableView.setEditing(false, animated: true)
     }
 
     @objc func tapAddBtn(sender:UIBarButtonItem){
@@ -92,6 +106,43 @@ extension ViewController: UITableViewDataSource{
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = self.tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as UITableViewCell
         cell.textLabel?.text = self.tasks[indexPath.row].title
+        
+        if self.tasks[indexPath.row].done{
+            cell.accessoryType = .checkmark
+        }else{
+            cell.accessoryType = .none
+            print("로드됨")
+        }
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        self.tasks.remove(at: indexPath.row)
+        self.tableView.deleteRows(at: [indexPath], with: .automatic)
+        
+        if self.tasks.isEmpty{
+            self.tapDoneBtn()
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        var tasks = self.tasks
+        let task = tasks[sourceIndexPath.row]
+        tasks.remove(at: sourceIndexPath.row)
+        tasks.insert(task, at: destinationIndexPath.row)
+        self.tasks = tasks
+    }
+}
+
+extension ViewController:UITableViewDelegate{
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        var task = self.tasks[indexPath.row]
+        task.done = !task.done
+        self.tasks[indexPath.row] = task
+        self.tableView.reloadRows(at: [indexPath], with: .automatic)
     }
 }
